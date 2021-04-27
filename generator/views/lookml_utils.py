@@ -31,7 +31,9 @@ MAP_LAYER_NAMES = {
 }
 
 
-def _get_dimension(path: Tuple[str, ...], field_type: str, mode: str) -> Dict[str, Any]:
+def _get_dimension(
+    path: Tuple[str, ...], app: str, field_type: str, mode: str
+) -> Dict[str, Any]:
     result: Dict[str, Any] = {}
     result["sql"] = "${TABLE}." + ".".join(path)
     name = path
@@ -65,20 +67,33 @@ def _get_dimension(path: Tuple[str, ...], field_type: str, mode: str) -> Dict[st
         if path in MAP_LAYER_NAMES:
             result["map_layer_name"] = MAP_LAYER_NAMES[path]
     result["name"] = "__".join(name)
+    if name[0] == "metrics":
+        result["link"] = {
+            "label": f"Glean Dictionary reference for {name[-1]}",
+            "url": f"https://dictionary.protosaur.dev/apps/{app}/metrics/{name[-1]}",
+            "icon_url": "https://dictionary.protosaur.dev/favicon.png",
+        }
+    print(result)
     return result
 
 
 def _generate_dimensions_helper(
-    schema: List[bigquery.SchemaField], *prefix: str
+    schema: List[bigquery.SchemaField], app: str, *prefix: str
 ) -> Iterable[dict]:
     for field in sorted(schema, key=lambda f: f.name):
         if field.field_type == "RECORD" and not field.mode == "REPEATED":
-            yield from _generate_dimensions_helper(field.fields, *prefix, field.name)
+            yield from _generate_dimensions_helper(
+                field.fields, app, *prefix, field.name
+            )
         else:
-            yield _get_dimension((*prefix, field.name), field.field_type, field.mode)
+            yield _get_dimension(
+                (*prefix, field.name), app, field.field_type, field.mode
+            )
 
 
-def _generate_dimensions(client: bigquery.Client, table: str) -> List[Dict[str, Any]]:
+def _generate_dimensions(
+    client: bigquery.Client, table: str, app: str
+) -> List[Dict[str, Any]]:
     """Generate dimensions and dimension groups from a bigquery table.
 
     When schema contains both submission_timestamp and submission_date, only produce
@@ -87,7 +102,7 @@ def _generate_dimensions(client: bigquery.Client, table: str) -> List[Dict[str, 
     Raise ClickException if schema results in duplicate dimensions.
     """
     dimensions = {}
-    for dimension in _generate_dimensions_helper(client.get_table(table).schema):
+    for dimension in _generate_dimensions_helper(client.get_table(table).schema, app):
         name = dimension["name"]
         # overwrite duplicate "submission" dimension group, thus picking the
         # last value sorted by field name, which is submission_timestamp

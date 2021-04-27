@@ -40,9 +40,9 @@ def _generate_explores(
         yield path
 
 
-def _get_views_from_dict(views: Dict[str, ViewDict]) -> Iterable[View]:
+def _get_views_from_dict(namespace: str, views: Dict[str, ViewDict]) -> Iterable[View]:
     for view_name, view_info in views.items():
-        yield view_types[view_info["type"]].from_dict(view_name, view_info)  # type: ignore
+        yield view_types[view_info["type"]].from_dict(view_name, namespace, view_info)  # type: ignore
 
 
 @click.command(help=__doc__)
@@ -68,7 +68,8 @@ def lookml(namespaces, target_dir):
 
         view_dir = target / namespace / "views"
         view_dir.mkdir(parents=True, exist_ok=True)
-        views = _get_views_from_dict(lookml_objects.get("views", {}))
+        print("NAMESPACE: %s" % namespace)
+        views = _get_views_from_dict(namespace, lookml_objects.get("views", {}))
 
         logging.info("  Generating views")
         for view_path in _generate_views(client, view_dir, views):

@@ -214,7 +214,7 @@ class GrowthAccountingView(View):
 
     def __init__(self, tables: List[Dict[str, str]]):
         """Get an instance of a GrowthAccountingView."""
-        super().__init__("growth_accounting", GrowthAccountingView.type, tables)
+        super().__init__("growth_accounting", None, GrowthAccountingView.type, tables)
 
     @classmethod
     def from_db_views(
@@ -231,7 +231,7 @@ class GrowthAccountingView(View):
                 yield GrowthAccountingView([{"table": f"mozdata.{dataset}.{view_id}"}])
 
     @classmethod
-    def from_dict(klass, name: str, _dict: ViewDict) -> GrowthAccountingView:
+    def from_dict(klass, name: str, app: str, _dict: ViewDict) -> GrowthAccountingView:
         """Get a view from a name and dict definition."""
         return GrowthAccountingView(_dict["tables"])
 
@@ -241,9 +241,9 @@ class GrowthAccountingView(View):
         table = self.tables[0]["table"]
 
         # add dimensions and dimension groups
-        dimensions = lookml_utils._generate_dimensions(bq_client, table) + deepcopy(
-            GrowthAccountingView.default_dimensions
-        )
+        dimensions = lookml_utils._generate_dimensions(
+            bq_client, table, None
+        ) + deepcopy(GrowthAccountingView.default_dimensions)
 
         view_defn["dimensions"] = list(
             filterfalse(lookml_utils._is_dimension_group, dimensions)

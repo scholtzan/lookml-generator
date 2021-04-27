@@ -17,13 +17,18 @@ class View(object):
     """A generic Looker View."""
 
     name: str
+    app: str
     view_type: str
     tables: List[Dict[str, str]]
 
-    def __init__(self, name: str, view_type: str, tables: List[Dict[str, str]]):
+    def __init__(
+        self, name: str, app: str, view_type: str, tables: List[Dict[str, str]]
+    ):
         """Create an instance of a view."""
         self.tables = tables
         self.name = name
+        self.app = app
+        print("APP: %s" % app)
         self.view_type = view_type
 
     @classmethod
@@ -34,7 +39,7 @@ class View(object):
         raise NotImplementedError("Only implemented in subclass.")
 
     @classmethod
-    def from_dict(klass, name: str, _dict: ViewDict) -> View:
+    def from_dict(klass, name: str, app: str, _dict: ViewDict) -> View:
         """Get a view from a name and dict definition."""
         raise NotImplementedError("Only implemented in subclass.")
 

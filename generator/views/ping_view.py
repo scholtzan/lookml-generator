@@ -16,9 +16,9 @@ class PingView(View):
 
     type: str = "ping_view"
 
-    def __init__(self, name: str, tables: List[Dict[str, str]]):
+    def __init__(self, name: str, app: str, tables: List[Dict[str, str]]):
         """Create instance of a PingView."""
-        super().__init__(name, PingView.type, tables)
+        super().__init__(name, app, PingView.type, tables)
 
     @classmethod
     def from_db_views(
@@ -43,12 +43,13 @@ class PingView(View):
                 views[view_id].append(table)
 
         for view_id, tables in views.items():
-            yield PingView(view_id, tables)
+            yield PingView(view_id, app, tables)
 
     @classmethod
-    def from_dict(klass, name: str, _dict: ViewDict) -> PingView:
+    def from_dict(klass, name: str, app: str, _dict: ViewDict) -> PingView:
         """Get a view from a name and dict definition."""
-        return PingView(name, _dict["tables"])
+        print("NAME: %s APP: %s" % (name, app))
+        return PingView(name, app, _dict["tables"])
 
     def to_lookml(self, bq_client) -> List[dict]:
         """Generate LookML for this view."""
@@ -61,7 +62,7 @@ class PingView(View):
         )["table"]
 
         # add dimensions and dimension groups
-        dimensions = lookml_utils._generate_dimensions(bq_client, table)
+        dimensions = lookml_utils._generate_dimensions(bq_client, table, self.app)
         view_defn["dimensions"] = list(
             filterfalse(lookml_utils._is_dimension_group, dimensions)
         )
